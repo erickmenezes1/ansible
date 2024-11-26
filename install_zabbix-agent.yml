@@ -34,12 +34,6 @@
         line: "ServerActive={{ zabbix_server }}"
         state: present
 
-          #    - name: Configure Zabbix Agent - Hostname
-          #lineinfile:
-          #path: "{{ zabbix_config }}"
-          #regexp: "^Hostname="
-          #line: "Hostname={{ inventory_hostname }}"
-          #state: present
     - name: Configure Zabbix Agent - Hostname
       lineinfile:
         path: "{{ zabbix_config }}"
