@@ -1,0 +1,77 @@
+---
+- name: Install and configure Zabbix Agent on RHEL9
+  hosts: zabbix_agents
+  become: yes
+
+  vars:
+    zabbix_repo: "https://repo.zabbix.com/zabbix/7.0/rhel/9/x86_64/zabbix-release-7.0-2.el9.noarch.rpm"
+    zabbix_config: "/etc/zabbix/zabbix_agentd.conf"
+    zabbix_server: "XXX.XXX.XXX.XXX" #nome ou ip do zabbix-server
+    tempo_resposta_agent: "30"
+    root_allow: "1"
+  tasks:
+     
+    - name: Install Zabbix repository --nogpgcheck
+      ansible.builtin.command: >
+        yum install -y "{{ zabbix_repo }}" --nogpgcheck
+
+    - name: Install Zabbix Agent
+      yum:
+        name: zabbix-agent
+        state: present
+
+    - name: Configure Zabbix Agent - Server
+      lineinfile:
+        path: "{{ zabbix_config }}"
+        regexp: "^Server="
+        line: "Server={{ zabbix_server }}"
+        state: present
+
+    - name: Configure Zabbix Agent - ServerActive
+      lineinfile:
+        path: "{{ zabbix_config }}"
+        regexp: "^ServerActive="
+        line: "ServerActive={{ zabbix_server }}"
+        state: present
+
+          #    - name: Configure Zabbix Agent - Hostname
+          #lineinfile:
+          #path: "{{ zabbix_config }}"
+          #regexp: "^Hostname="
+          #line: "Hostname={{ inventory_hostname }}"
+          #state: present
+    - name: Configure Zabbix Agent - Hostname
+      lineinfile:
+        path: "{{ zabbix_config }}"
+        regexp: "^Hostname="
+        line: "Hostname={{ ansible_facts['hostname'] }}"
+        state: present
+
+
+    - name: Configure Zabbix Agent - HostMetadata
+      lineinfile:
+        path: "{{ zabbix_config }}"
+        regexp: "^# HostMetadata="
+        line: "HostMetadata=Linux"
+        state: present
+
+    - name: Configure Zabbix Agent - Timeout
+      lineinfile:
+        path: "{{ zabbix_config }}"
+        regexp: "^# Timeout="
+        line: "Timeout={{ tempo_resposta_agent }}"
+        state: present
+
+    - name: Configure Zabbix Agent - AllowRoot
+      lineinfile:
+        path: "{{ zabbix_config }}"
+        regexp: "^# AllowRoot="
+        line: "AllowRoot={{ root_allow }}"
+        state: present
+
+    - name: Start and enable Zabbix Agent service
+      systemd:
+        name: zabbix-agent
+        enabled: yes
+        state: started
+
